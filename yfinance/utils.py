@@ -54,6 +54,10 @@ def get_json(url, proxy=None):
         '(this)')[0].split(';\n}')[0].strip()
     data = _json.loads(json_str)[
         'context']['dispatcher']['stores']['QuoteSummaryStore']
+    # import pprint
+    # pp = pprint.PrettyPrinter()
+    # import json
+    # print(json.dumps(data, indent=4))
 
     # return data
     new_data = _json.dumps(data).replace('{}', 'null')

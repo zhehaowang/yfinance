@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Yahoo! Finance market data downloader (+fix for Pandas Datareader)
@@ -194,3 +194,7 @@ class Ticker(TickerBase):
         if not self._expirations:
             self._download_options()
         return tuple(self._expirations.keys())
+
+if __name__ == "__main__":
+    ticker = Ticker("FB")
+    print(ticker.info)
