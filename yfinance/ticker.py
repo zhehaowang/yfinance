@@ -197,4 +197,4 @@ class Ticker(TickerBase):
 
 if __name__ == "__main__":
     ticker = Ticker("FB")
-    print(ticker.info)
+    print(ticker.info['recommendationMean'])

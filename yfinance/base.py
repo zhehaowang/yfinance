@@ -26,6 +26,7 @@ import datetime as _datetime
 import requests as _requests
 import pandas as _pd
 import numpy as _np
+import math
 
 try:
     from urllib.parse import quote as urlencode
@@ -277,19 +278,28 @@ class TickerBase():
 
         # get info and sustainability
         url = '%s/%s' % (self._scrape_url, self.ticker)
+        # print(url)
         data = utils.get_json(url, proxy)
 
         # holders
         url = "{}/{}/holders".format(self._scrape_url, self.ticker)
-        holders = _pd.read_html(url)
-        self._major_holders = holders[0]
-        self._institutional_holders = holders[1]
-        if 'Date Reported' in self._institutional_holders:
-            self._institutional_holders['Date Reported'] = _pd.to_datetime(
-                self._institutional_holders['Date Reported'])
-        if '% Out' in self._institutional_holders:
-            self._institutional_holders['% Out'] = self._institutional_holders[
-                '% Out'].str.replace('%', '').astype(float)/100
+        try:
+            holders = _pd.read_html(url)
+            self._major_holders = holders[0]
+            if len(holders) > 1:
+                self._institutional_holders = holders[1]
+                if 'Date Reported' in self._institutional_holders:
+                    self._institutional_holders['Date Reported'] = _pd.to_datetime(
+                        self._institutional_holders['Date Reported'])
+                if '% Out' in self._institutional_holders:
+                    self._institutional_holders['% Out'] = self._institutional_holders[
+                        '% Out'].str.replace('%', '').astype(float)/100
+            else:
+                self._institutional_holders = _pd.DataFrame()
+        except ValueError:
+            # No tables found
+            self._major_holders = _pd.DataFrame()
+            self._institutional_holders = _pd.DataFrame()
 
         # sustainability
         d = {}
@@ -315,7 +325,10 @@ class TickerBase():
             if isinstance(data.get(item), dict):
                 self._info.update(data[item])
 
-        self._info['regularMarketPrice'] = self._info['regularMarketOpen']
+        if 'regularMarketOpen' in self._info:
+            self._info['regularMarketPrice'] = self._info['regularMarketOpen']
+        else:
+            self._info['regularMarketPrice'] = float('nan')
         self._info['logo_url'] = ""
         try:
             domain = self._info['website'].split(
@@ -334,6 +347,7 @@ class TickerBase():
             self._calendar.index = utils.camel2title(self._calendar.index)
             self._calendar.columns = ['Value']
         except Exception:
+            self._calendar = _pd.DataFrame()
             pass
 
         # analyst recommendations
@@ -348,6 +362,7 @@ class TickerBase():
             self._recommendations = rec[[
                 'Firm', 'To Grade', 'From Grade', 'Action']].sort_index()
         except Exception:
+            self._recommendations = _pd.DataFrame()
             pass
 
         # get fundamentals
